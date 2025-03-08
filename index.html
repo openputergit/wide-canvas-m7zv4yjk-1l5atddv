@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Converter - Google Fonts to Web Fonts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+            border-color: #0ea5e9;
+            background-color: #f0f9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-800">FontConverter</h1>
+                    <nav class="space-x-4">
+                        <a href="#" class="text-gray-600 hover:text-gray-900">Documentation</a>
+                        <a href="#" class="text-gray-600 hover:text-gray-900">Help</a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-12">
+            <div class="max-w-3xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">
+                        Convert Google Fonts to Web Fonts
+                    </h2>
+                    <p class="text-lg text-gray-600">
+                        Upload your Google Font files and get web-optimized fonts with CSS
+                    </p>
+                </div>
+
+                <!-- Upload Section -->
+                <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                    <div id="dropZone" class="drop-zone rounded-lg p-8 text-center cursor-pointer">
+                        <div class="space-y-4">
+                            <i class="bi bi-cloud-upload text-4xl text-gray-400"></i>
+                            <p class="text-gray-600">Drag and drop font files here or</p>
+                            <button type="button" id="browseButton" class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-2 rounded-lg transition-colors">
+                                Browse Files
+                            </button>
+                            <input type="file" id="fileInput" class="hidden" multiple accept=".ttf,.otf">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div id="settingsSection" class="bg-white rounded-lg shadow-lg p-8 mb-8 hidden">
+                    <h3 class="text-xl font-semibold mb-6">Conversion Settings</h3>
+                    <div class="space-y-6">
+                        <!-- File List -->
+                        <div>
+                            <h4 class="font-medium mb-3">Selected Files</h4>
+                            <ul id="fileList" class="space-y-2 text-gray-600"></ul>
+                        </div>
+
+                        <!-- Format Options -->
+                        <div>
+                            <h4 class="font-medium mb-3">Output Formats</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" class="rounded text-blue-500" checked>
+                                    <span>WOFF2</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" class="rounded text-blue-500" checked>
+                                    <span>WOFF</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" class="rounded text-blue-500">
+                                    <span>TTF</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" class="rounded text-blue-500">
+                                    <span>EOT</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button id="convertButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-3 rounded-lg transition-colors">
+                            Convert and Download
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div id="progressSection" class="bg-white rounded-lg shadow-lg p-8 hidden">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-700 font-medium">Converting files...</span>
+                            <span id="progressText" class="text-gray-600">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progressBar" class="bg-blue-500 rounded-full h-2" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const browseButton = document.getElementById('browseButton');
+        const settingsSection = document.getElementById('settingsSection');
+        const fileList = document.getElementById('fileList');
+        const convertButton = document.getElementById('convertButton');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        // Handle drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Handle file input
+        browseButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            settingsSection.classList.remove('hidden');
+            fileList.innerHTML = '';
+            
+            Array.from(files).forEach(file => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center gap-2';
+                li.innerHTML = `
+                    <i class="bi bi-file-earmark-font text-blue-500"></i>
+                    ${file.name}
+                `;
+                fileList.appendChild(li);
+            });
+        }
+
+        // Handle conversion
+        convertButton.addEventListener('click', () => {
+            settingsSection.classList.add('hidden');
+            progressSection.classList.remove('hidden');
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        // Simulate download
+                        const link = document.createElement('a');
+                        link.href = '#';
+                        link.download = 'web-fonts.zip';
+                        link.click();
+                        
+                        // Reset UI
+                        progressSection.classList.add('hidden');
+                        settingsSection.classList.add('hidden');
+                        progressBar.style.width = '0%';
+                        progressText.textContent = '0%';
+                    }, 500);
+                }
+            }, 100);
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
